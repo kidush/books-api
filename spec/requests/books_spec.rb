@@ -3,8 +3,9 @@ require 'rails_helper'
 RSpec.describe "Books", type: :request do
   describe "GET /index" do
     it "returns a list of books" do
-      book1 = Book.new("My book 1", "Author", 2024)
-      book2 = Book.new("My book 2", "Author", 2022)
+      data = {title: "My book 1", author: "Author", publication_year: 2024}
+      book1 = Book.new(data)
+      book2 = Book.new(data.merge({title: "My book 2"}))
 
       book1.save
       book2.save
@@ -110,5 +111,18 @@ RSpec.describe "Books", type: :request do
   end
 
   describe "PUT /books/:id" do
+    context "with a valid book" do 
+      it "updates a book in the list of books" do
+        post "/books", params: { title: "My book 1", author: "Author", publication_year: 2024 }
+        post "/books", params: { title: "My book 2", author: "Author", publication_year: 2022 }
+
+        put "/books/1", params: { title: "My new book 1" }
+        parsed_body = JSON.parse(response.body)
+
+        expect(parsed_body["title"]).to eq("My new book 1")
+        expect(parsed_body["author"]).to eq("Author")
+        expect(parsed_body["publication_year"]).to eq(2024)
+      end
+    end
   end
 end
