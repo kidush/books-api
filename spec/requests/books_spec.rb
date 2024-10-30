@@ -1,11 +1,11 @@
-require 'rails_helper'
+require "rails_helper"
 
 RSpec.describe "Books", type: :request do
   describe "GET /index" do
     it "returns a list of books" do
-      data = {title: "My book 1", author: "Author", publication_year: 2024}
+      data = { title: "My book 1", author: "Author", publication_year: 2024 }
       book1 = Book.new(data)
-      book2 = Book.new(data.merge({title: "My book 2"}))
+      book2 = Book.new(data.merge({ title: "My book 2" }))
 
       book1.save
       book2.save
@@ -16,22 +16,22 @@ RSpec.describe "Books", type: :request do
 
       expect(parsed_body.size).to eq 2
 
-      expect(parsed_body[0]["title"]). to eq("My book 1")
+      expect(parsed_body[0]["title"]).to eq("My book 1")
     end
   end
 
   describe "POST /books/:id" do
     context "when a valid data is passed" do
       it "creates a book" do
-        expect { 
+        expect {
           post "/books", params: { title: "My book", author: "Author", publication_year: 2024 }
-        }. to change(Book.all, :size).by(1)
+        }.to change(Book.all, :size).by(1)
       end
 
       it "returns a status of ok" do
         post "/books", params: { title: "My book", author: "Author", publication_year: 2024 }
 
-        expect(response).to have_http_status :ok 
+        expect(response).to have_http_status :ok
       end
     end
 
@@ -97,31 +97,53 @@ RSpec.describe "Books", type: :request do
   describe "GET /books/:id" do
     context "When a valid id is passed" do
       it "returns the book" do
-        post "/books", params: { title: "My book 1", author: "Author", publication_year: 2024 }
-        post "/books", params: { title: "My book 2", author: "Author", publication_year: 2022 }
+        stub_const("Book::BOOKS", [
+          { id: 1, title: "Mocked book 1", author: "Mock author 1", publication_year: 2023 },
+          { id: 2, title: "Mocked book 2", author: "Mock author 2", publication_year: 2024 },
+        ])
 
         get "/books/1"
         parsed_body = JSON.parse(response.body)
 
-        expect(parsed_body["title"]).to eq("My book 1")
-        expect(parsed_body["author"]).to eq("Author")
-        expect(parsed_body["publication_year"]).to eq(2024)
+        expect(parsed_body["title"]).to eq("Mocked book 1")
+        expect(parsed_body["author"]).to eq("Mock author 1")
+        expect(parsed_body["publication_year"]).to eq(2023)
       end
     end
   end
 
   describe "PUT /books/:id" do
-    context "with a valid book" do 
+    context "with a valid book" do
       it "updates a book in the list of books" do
-        post "/books", params: { title: "My book 1", author: "Author", publication_year: 2024 }
-        post "/books", params: { title: "My book 2", author: "Author", publication_year: 2022 }
+        stub_const("Book::BOOKS", [
+          { id: 1, title: "Mocked book 1", author: "Mock author 1", publication_year: 2023 },
+          { id: 2, title: "Mocked book 2", author: "Mock author 2", publication_year: 2024 },
+        ])
 
         put "/books/1", params: { title: "My new book 1" }
         parsed_body = JSON.parse(response.body)
 
         expect(parsed_body["title"]).to eq("My new book 1")
-        expect(parsed_body["author"]).to eq("Author")
-        expect(parsed_body["publication_year"]).to eq(2024)
+        expect(parsed_body["author"]).to eq("Mock author 1")
+        expect(parsed_body["publication_year"]).to eq(2023)
+      end
+    end
+  end
+
+  describe "DELETE /books/:id" do
+    context "with a valid book id passed" do
+      it "deletes the book" do
+        stub_const("Book::BOOKS", [
+          { id: 1, title: "Mocked book 1", author: "Mock author 1", publication_year: 2023 },
+          { id: 2, title: "Mocked book 2", author: "Mock author 2", publication_year: 2024 },
+        ])
+
+        delete "/books/1"
+        get "/books"
+
+        parsed_body = JSON.parse(response.body)
+        expect(parsed_body.size).to eq 1
+        expect(parsed_body[0]["title"]).to eq("Mocked book 2")
       end
     end
   end

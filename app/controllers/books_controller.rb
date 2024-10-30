@@ -1,5 +1,5 @@
 class BooksController < ApplicationController
-  before_action :set_book, only: %w[show update]
+  before_action :set_book, only: %w[show update destroy]
 
   def index
     render json: Book.all
@@ -22,6 +22,14 @@ class BooksController < ApplicationController
   def update
     if @book.update(valid_params)
       render json: @book
+    end
+  end
+
+  def destroy
+    if @book.destroy
+      head :ok
+    else
+      head :not_found
     end
   end
 

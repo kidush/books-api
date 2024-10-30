@@ -9,10 +9,10 @@ class Book
   def initialize(params)
     @params = params
     @id = if params[:id].present?
-      params[:id]
-    else
-      @@id += 1
-    end
+        params[:id]
+      else
+        @@id += 1
+      end
 
     @title = params[:title]
     @author = params[:author]
@@ -26,7 +26,7 @@ class Book
   end
 
   def self.find(id)
-    book = BOOKS.find { |book| book[:id] == id.to_i }
+    book = BOOKS.find { |book| book[:id].to_i == id.to_i }
 
     self.new(book) if book.present?
   end
@@ -41,22 +41,26 @@ class Book
   end
 
   def update(new_params)
-    book = self.class.find(id)
     @params = @params.merge(new_params.to_h.symbolize_keys)
 
     @params.to_h.symbolize_keys.each do |k, v|
       instance_variable_set(:"@#{k}", v)
     end
 
-    if book.present? && valid?
-
-      index = book_index(book)
+    if valid?
+      index = book_index(self)
       BOOKS[index] = @params
 
       self
     else
       false
     end
+  end
+
+  def destroy
+    BOOKS
+      .delete_if { |book| book[:id] == id }
+      .size == 1
   end
 
   def valid?
@@ -99,7 +103,7 @@ class Book
       id: id.to_i,
       title: title,
       author: author,
-      publication_year: publication_year.to_i
+      publication_year: publication_year.to_i,
     }
   end
 end
